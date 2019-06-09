@@ -141,7 +141,7 @@ private:
 
         //obtain a list of neighbours for each cell
         compute_neighbours();
-        
+
         //calculate number of mines surrounding each cell
         compute_digit_cells();
     }
@@ -152,13 +152,17 @@ public:
     int height;
     int width;
 
+    int flags_set;
     int mines_left;
-    
+
+    bool hit_mine;
+
     Minesweeper(int h, int w, int m){
         height = h;
         width = w;
         mines = m;
         mines_left = m;
+        hit_mine = false;
 
         board = new Node[height * width];
         for(int i = 0; i < height; i++){
@@ -185,18 +189,27 @@ public:
     //just open the cell otherwise
     void open_cell(int y, int x){
         Node *cell = &board[y * height + x];
-        if(!cell->visited){
-            if(!cell->is_mine){
-                if(cell->value != 0){
-                    cell->visited = true;
-                } else {
-                    cell->visited = true;
-                    for(int n = 0; n < cell->num_neighbours; n++){
-                        Node *neighbour = cell->neighbours[n];
-                        open_cell(neighbour->y, neighbour->x);
+        if(!hit_mine){
+            if(!cell->visited){
+                if(!cell->is_mine){
+                    if(cell->value != 0){
+                        cell->visited = true;
+                    } else {
+                        cell->visited = true;
+                        for(int n = 0; n < cell->num_neighbours; n++){
+                            Node *neighbour = cell->neighbours[n];
+                            open_cell(neighbour->y, neighbour->x);
+                        }
                     }
                 }
             }
+        }
+    }
+
+    void toggle_flag(int y, int x){
+        Node *cell = &board[y * height + x];
+        if(!cell->visited && !hit_mine){
+            cell->is_flag = !cell->is_flag;
         }
     }
 };
@@ -215,10 +228,14 @@ void update_display(WINDOW *win, Minesweeper game){
             
             if(cell->visited){
                 character = character_map[cell->value];
+            }
 
-                if(cell->is_mine){
-                    character = '*';
-                }
+            if(cell->is_mine && !cell->is_flag && game.hit_mine){
+                character = '*';
+            }
+
+            if(cell->is_flag){
+                character = 'F';
             }
 
             waddch(win, character);
@@ -286,7 +303,15 @@ int main(){
                     break;
 
                 case 10: //enter key
-                    game.open_cell(cur_y - 1, cur_x - 1);
+                    if(!game.board[(cur_y - 1) * game.height + cur_x - 1].is_mine){
+                        game.open_cell(cur_y - 1, cur_x - 1);
+                    } else {
+                        game.hit_mine = true;
+                    }
+                    break;
+
+                case 102:
+                    game.toggle_flag(cur_y - 1, cur_x - 1);
                     break;
 
                 default:
