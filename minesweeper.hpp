@@ -62,7 +62,7 @@ public:
 
     //breadth first search when opening empty area
     //just open the cell otherwise
-    void open_cell(int y, int x);
+    void open_cell(int y, int x, bool external);
 
     void toggle_flag(int y, int x);
 };
@@ -191,7 +191,7 @@ void Minesweeper::set_up(){
     compute_digit_cells();
 }
 
-void Minesweeper::open_cell(int y, int x){
+void Minesweeper::open_cell(int y, int x, bool external = true){
     Node *cell = &board[y * height + x];
     
     if(!hit_mine){
@@ -209,6 +209,34 @@ void Minesweeper::open_cell(int y, int x){
                         Node *neighbour = cell->neighbours[n];
                         open_cell(neighbour->y, neighbour->x);
                     }
+                }
+            }
+        } else if(external) {
+            //chord: open nearby cells if possible and all flags are correct
+            int num_flags = 0;
+            bool all_flags_on_mines = true;
+            Node *neighbour;
+            for(int i = 0; i < cell->num_neighbours; i++){
+                neighbour = cell->neighbours[i];
+                if(neighbour->is_flag){
+                    num_flags++;
+                }
+
+                if((!neighbour->is_mine && neighbour->is_flag) || (neighbour->is_mine && !neighbour->is_flag)){
+                    //misplaced flag
+                    all_flags_on_mines = false;
+                }
+            }
+
+            //chord if correct number of flags
+            if(num_flags == cell->value){
+                if(all_flags_on_mines){
+                    for(int i = 0; i < cell->num_neighbours; i++){
+                        neighbour = cell->neighbours[i];
+                        open_cell(neighbour->y, neighbour->x, false);
+                    }
+                } else {
+                    hit_mine = true;
                 }
             }
         }
