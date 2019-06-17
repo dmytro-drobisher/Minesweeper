@@ -47,7 +47,7 @@ public:
         for(int i = 0; i < height; i++){
             for(int j = 0; j < width; j++){
                 
-                Node *cell = &board[i * height + j];
+                Node *cell = &board[i * width + j];
                 cell->is_mine = false;
                 cell->visited = false;
                 cell->is_flag = false;
@@ -75,7 +75,7 @@ void Minesweeper::compute_neighbours(){
     Node *current_node;
     for(int i = 0; i < height; i++){
         for(int j = 0; j < width; j++){
-            current_node = &board[i * height + j];
+            current_node = &board[i * width + j];
             //printf("%i", current_node.x);
             if(i == 0){         //top row of the board
                 if(j == 0){     //top left corner
@@ -94,61 +94,61 @@ void Minesweeper::compute_neighbours(){
                     current_node->num_neighbours = 5;
                     current_node->neighbours = new Node *[5];
                     current_node->neighbours[0] = &board[j - 1];
-                    current_node->neighbours[1] = &board[(i + 1) * height + j - 1];
-                    current_node->neighbours[2] = &board[(i + 1) * height + j];
-                    current_node->neighbours[3] = &board[(i + 1) * height + j + 1];
+                    current_node->neighbours[1] = &board[(i + 1) * width + j - 1];
+                    current_node->neighbours[2] = &board[(i + 1) * width + j];
+                    current_node->neighbours[3] = &board[(i + 1) * width + j + 1];
                     current_node->neighbours[4] = &board[j + 1];
                 }
             } else if(i == height - 1){     //bottom row
                 if(j == 0){                 //bottom left corner
                     current_node->num_neighbours = 3;
                     current_node->neighbours = new Node *[3];
-                    current_node->neighbours[0] = &board[(i - 1) * height];
-                    current_node->neighbours[1] = &board[(i - 1) * height + 1];
-                    current_node->neighbours[2] = &board[i * height + 1];
+                    current_node->neighbours[0] = &board[(i - 1) * width];
+                    current_node->neighbours[1] = &board[(i - 1) * width + 1];
+                    current_node->neighbours[2] = &board[i * width + 1];
                 } else if(j == width - 1){  //bottom right corner
                     current_node->num_neighbours = 3;
                     current_node->neighbours = new Node *[3];
-                    current_node->neighbours[0] = &board[(i - 1) * height + j];
-                    current_node->neighbours[1] = &board[(i - 1) * height + j - 1];
-                    current_node->neighbours[2] = &board[i * height + j - 1];
+                    current_node->neighbours[0] = &board[(i - 1) * width + j];
+                    current_node->neighbours[1] = &board[(i - 1) * width + j - 1];
+                    current_node->neighbours[2] = &board[i * width + j - 1];
                 } else {
                     current_node->num_neighbours = 5;
                     current_node->neighbours = new Node *[5];
-                    current_node->neighbours[0] = &board[i * height + j - 1];
-                    current_node->neighbours[1] = &board[(i - 1) * height + j - 1];
-                    current_node->neighbours[2] = &board[(i - 1) * height + j];
-                    current_node->neighbours[3] = &board[(i - 1) * height + j + 1];
-                    current_node->neighbours[4] = &board[i * height + j + 1];
+                    current_node->neighbours[0] = &board[i * width + j - 1];
+                    current_node->neighbours[1] = &board[(i - 1) * width + j - 1];
+                    current_node->neighbours[2] = &board[(i - 1) * width + j];
+                    current_node->neighbours[3] = &board[(i - 1) * width + j + 1];
+                    current_node->neighbours[4] = &board[i * width + j + 1];
                 }
             } else {
                 if(j == 0){     //left wall
                     current_node->num_neighbours = 5;
                     current_node->neighbours = new Node *[5];
-                    current_node->neighbours[0] = &board[(i - 1) * height];
-                    current_node->neighbours[1] = &board[(i - 1) * height + 1];
-                    current_node->neighbours[2] = &board[i * height + 1];
-                    current_node->neighbours[3] = &board[(i + 1) * height + 1];
-                    current_node->neighbours[4] = &board[(i + 1) * height];
+                    current_node->neighbours[0] = &board[(i - 1) * width];
+                    current_node->neighbours[1] = &board[(i - 1) * width + 1];
+                    current_node->neighbours[2] = &board[i * width + 1];
+                    current_node->neighbours[3] = &board[(i + 1) * width + 1];
+                    current_node->neighbours[4] = &board[(i + 1) * width];
                 } else if(j == width - 1){      //right wall
                     current_node->num_neighbours = 5;
                     current_node->neighbours = new Node *[5];
-                    current_node->neighbours[0] = &board[(i - 1) * height + j];
-                    current_node->neighbours[1] = &board[(i - 1) * height + j - 1];
-                    current_node->neighbours[2] = &board[i * height + j - 1];
-                    current_node->neighbours[3] = &board[(i + 1) * height + j - 1];
-                    current_node->neighbours[4] = &board[(i + 1) * height + j];
+                    current_node->neighbours[0] = &board[(i - 1) * width + j];
+                    current_node->neighbours[1] = &board[(i - 1) * width + j - 1];
+                    current_node->neighbours[2] = &board[i * width + j - 1];
+                    current_node->neighbours[3] = &board[(i + 1) * width + j - 1];
+                    current_node->neighbours[4] = &board[(i + 1) * width + j];
                 } else {        //middle
                     current_node->num_neighbours = 8;
                     current_node->neighbours = new Node *[8];
-                    current_node->neighbours[0] = &board[(i - 1) * height + j - 1];
-                    current_node->neighbours[1] = &board[(i - 1) * height + j];
-                    current_node->neighbours[2] = &board[(i - 1) * height + j + 1];
-                    current_node->neighbours[3] = &board[i * height + j - 1];
-                    current_node->neighbours[4] = &board[i * height + j + 1];
-                    current_node->neighbours[5] = &board[(i + 1) * height + j - 1];
-                    current_node->neighbours[6] = &board[(i + 1) * height + j];
-                    current_node->neighbours[7] = &board[(i + 1) * height + j + 1];
+                    current_node->neighbours[0] = &board[(i - 1) * width + j - 1];
+                    current_node->neighbours[1] = &board[(i - 1) * width + j];
+                    current_node->neighbours[2] = &board[(i - 1) * width + j + 1];
+                    current_node->neighbours[3] = &board[i * width + j - 1];
+                    current_node->neighbours[4] = &board[i * width + j + 1];
+                    current_node->neighbours[5] = &board[(i + 1) * width + j - 1];
+                    current_node->neighbours[6] = &board[(i + 1) * width + j];
+                    current_node->neighbours[7] = &board[(i + 1) * width + j + 1];
                 }
             }
             
@@ -192,7 +192,7 @@ void Minesweeper::set_up(){
 }
 
 void Minesweeper::open_cell(int y, int x, bool external = true){
-    Node *cell = &board[y * height + x];
+    Node *cell = &board[y * width + x];
     
     if(!hit_mine){
         //open previously unvisited cell
@@ -244,7 +244,7 @@ void Minesweeper::open_cell(int y, int x, bool external = true){
 }
 
 void Minesweeper::toggle_flag(int y, int x){
-    Node *cell = &board[y * height + x];
+    Node *cell = &board[y * width + x];
     if(!cell->visited && !hit_mine){
         cell->is_flag = !cell->is_flag;
     }

@@ -14,7 +14,7 @@ void update_display(WINDOW *win, Minesweeper game){
         for(int j = 0; j < game.width; j++){
             char character = ' ';
 
-            Node *cell = &game.board[i * game.height + j];
+            Node *cell = &game.board[i * game.width + j];
             
             if(cell->visited){
                 character = character_map[cell->value];
