@@ -189,7 +189,7 @@ void Minesweeper::set_up(){
         bool found = false;
         while(!found){
             position = rand() % (height * width);
-            if(board[position].value == 0){
+            if(!board[position].is_mine){
                 found = true;
                 board[position].is_mine = true; //set mine
             }
@@ -205,7 +205,7 @@ void Minesweeper::open_cell(int y, int x, bool external = true){
     if(first_click){
         // TODO: first mine behaviour
 
-        //calculate number of mines surrounding each cell
+        // calculate number of mines surrounding each cell
         compute_digit_cells();
 
         // set start time
@@ -244,6 +244,8 @@ void Minesweeper::open_cell(int y, int x, bool external = true){
             int num_flags = 0;
             bool all_flags_on_mines = true;
             Node *neighbour;
+
+            // compute number of flags surrounding current cell and determine if they are in mines
             for(int i = 0; i < cell->num_neighbours; i++){
                 neighbour = cell->neighbours[i];
                 if(neighbour->is_flag){
