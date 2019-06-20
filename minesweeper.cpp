@@ -1,9 +1,10 @@
+#include <iostream>
 #include <curses.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <cstring>
 
 #include "minesweeper.hpp"
+#include "cxxopts.hpp"
 
 //update the board in terminal
 void update_display(WINDOW *win, Minesweeper game){
@@ -22,6 +23,8 @@ void update_display(WINDOW *win, Minesweeper game){
 
             if(cell->is_mine && !cell->is_flag && game.hit_mine){
                 character = '*';
+            } else if (cell->is_mine && game.game_finished && !game.hit_mine){
+                character = 'F';
             }
 
             if(cell->is_flag){
@@ -34,11 +37,11 @@ void update_display(WINDOW *win, Minesweeper game){
     }
 }
 
-int main(){
+int main(int argc, char *argv[]){
     int input;
 
-    int max_x = 10;
-    int max_y = 10;
+    int width = 8;
+    int height = 8;
     int mines = 10;
 
     int cur_x = 1;
@@ -46,8 +49,57 @@ int main(){
 
     int win_start_x = 0;
     int win_start_y = 0;
+
+    // Parse arguments
+    cxxopts::Options args("Minespweeper", "");
+
+    args.add_options()
+        ("b,beginner", "Beginner")
+        ("i,intermediate", "Intermediate")
+        ("e,expert", "Expert")
+        ("c,custom", "Custom")
+        ("h,height", "Height", cxxopts::value<int>()->default_value("8"))
+        ("w,width", "Width", cxxopts::value<int>()->default_value("8"))
+        ("m,mines", "Number of mines", cxxopts::value<int>()->default_value("10"))
+        ("help", "Show help");
+
+    auto result = args.parse(argc, argv);
     
-    Minesweeper game = Minesweeper(max_y, max_x, mines);
+    if(result.count("help")){
+        std::cout << args.help({""}) << std::endl;
+        return 0;
+    } else if(result.count("b")){
+        height = 8;
+        width = 8;
+        mines = 10;
+    } else if(result.count("i")){
+        height = 16;
+        width = 16;
+        mines = 40;
+    } else if(result.count("e")){
+        height = 16;
+        width = 30;
+        mines = 99;
+    } else if(result.count("c")){
+        if(result.count("h") && result.count("w") && result.count("m")){
+            try
+            {
+                height = result["h"].as<int>();
+                width = result["w"].as<int>();
+                mines = result["m"].as<int>();
+                if(mines >= height * width){
+                    mines = height * width - 1;
+                }
+            }
+            catch(const cxxopts::OptionException& e)
+            {
+                std::cerr << e.what() << '\n';
+                return 0;
+            }
+        }
+    }
+
+    Minesweeper game = Minesweeper(height, width, mines);
 
     initscr();
     noecho();
@@ -55,19 +107,19 @@ int main(){
     nodelay(stdscr, true);
     keypad(stdscr, true);
 
-    WINDOW *win = newwin(max_y + 2, max_x + 2, win_start_y, win_start_x);
+    WINDOW *win = newwin(height + 2, width + 2, win_start_y, win_start_x);
     box(win, 0, 0);
     refresh();
     wmove(win, 1, 1);
     update_display(win, game);
 
-    for(;;)
+    while(!game.game_finished)
     {
         if((input = getch()) != ERR){
             switch (input)
             {
                 case KEY_DOWN:
-                    if(cur_y < max_y){
+                    if(cur_y < height){
                         cur_y++;
                     }
                     break;
@@ -79,7 +131,7 @@ int main(){
                     break;
 
                 case KEY_RIGHT:
-                    if(cur_x < max_x){
+                    if(cur_x < width){
                         cur_x++;
                     }
                     break;
@@ -91,14 +143,10 @@ int main(){
                     break;
 
                 case 10: //enter key
-                    if(!game.board[(cur_y - 1) * game.height + cur_x - 1].is_mine){
-                        game.open_cell(cur_y - 1, cur_x - 1);
-                    } else {
-                        game.hit_mine = true;
-                    }
+                    game.open_cell(cur_y - 1, cur_x - 1);
                     break;
 
-                case 102:
+                case 102: //F key
                     game.toggle_flag(cur_y - 1, cur_x - 1);
                     break;
 
@@ -111,8 +159,34 @@ int main(){
             wrefresh(win);
         }
     }
+
+    // End game statistics
+    move(height + 3, 0);
     
+    if(game.hit_mine){
+        printw("Hit Mine!\n");    
+    } else {
+        printw("You win!\n");
+        printw("You did it in %.2f seconds.\n", game.get_playing_time());
+    }
+
+    printw("Press 'R' to restart, 'ENTER' to quit...");
+    refresh();
+
+    while(1){
+        input = getch();
+        if(input != ERR){
+            if(getch() == 114){
+                printf("restart");
+                //game.restart()
+            } else {
+                break;
+            }
+        }
+    }
+
     delwin(win);
     endwin();
-    printf("test\n");
+
+    return 0;
 }

@@ -1,5 +1,5 @@
-#include <ctime>
 #include <cstdlib>
+#include <chrono>
 
 struct Node{
     //coordinates
@@ -19,6 +19,14 @@ struct Node{
 
 class Minesweeper{
 private:
+    // number of cells opened that are not mines
+    int opened_cells;
+    bool first_click;
+
+    // time statistics
+    std::chrono::time_point<std::chrono::system_clock> start_time;
+    std::chrono::time_point<std::chrono::system_clock> end_time;
+
     void compute_neighbours();
 
     void compute_digit_cells();
@@ -31,16 +39,17 @@ public:
     int height;
     int width;
 
-    int flags_set;
-    int mines_left;
-
+    bool game_finished;
     bool hit_mine;
 
     Minesweeper(int h, int w, int m){
+        first_click = true;
+        game_finished = false;
+        opened_cells = 0;
+        
         height = h;
         width = w;
         mines = m;
-        mines_left = m;
         hit_mine = false;
 
         board = new Node[height * width];
@@ -60,11 +69,13 @@ public:
         set_up();
     }
 
-    //breadth first search when opening empty area
+    //depth first search when opening empty area
     //just open the cell otherwise
     void open_cell(int y, int x, bool external);
 
     void toggle_flag(int y, int x);
+
+    double get_playing_time();
 };
 
 void Minesweeper::compute_neighbours(){
@@ -186,33 +197,50 @@ void Minesweeper::set_up(){
     }
     //obtain a list of neighbours for each cell
     compute_neighbours();
-    
-    //calculate number of mines surrounding each cell
-    compute_digit_cells();
 }
 
 void Minesweeper::open_cell(int y, int x, bool external = true){
     Node *cell = &board[y * width + x];
     
+    if(first_click){
+        // TODO: first mine behaviour
+
+        //calculate number of mines surrounding each cell
+        compute_digit_cells();
+
+        // set start time
+        start_time = std::chrono::system_clock::now();
+        first_click = false;
+    }
+
     if(!hit_mine){
-        //open previously unvisited cell
+        // open previously unvisited cell
         if(!cell->visited){
             if(!cell->is_mine){
                 cell->is_flag = false;
                 
-                //run BFS to open an empty region
+                opened_cells++;
+
+                // run DFS to open an empty region
                 if(cell->value != 0){
                     cell->visited = true;
                 } else {
                     cell->visited = true;
                     for(int n = 0; n < cell->num_neighbours; n++){
                         Node *neighbour = cell->neighbours[n];
-                        open_cell(neighbour->y, neighbour->x);
+                        open_cell(neighbour->y, neighbour->x, false);
                     }
                 }
+            } else if(external) {
+                // unvisited cell from external trigger
+                hit_mine = true;
+                game_finished = true;
+
+                // set end time
+                end_time = std::chrono::system_clock::now();
             }
         } else if(external) {
-            //chord: open nearby cells if possible and all flags are correct
+            // chord: open nearby cells if possible and all flags are correct
             int num_flags = 0;
             bool all_flags_on_mines = true;
             Node *neighbour;
@@ -223,12 +251,12 @@ void Minesweeper::open_cell(int y, int x, bool external = true){
                 }
 
                 if((!neighbour->is_mine && neighbour->is_flag) || (neighbour->is_mine && !neighbour->is_flag)){
-                    //misplaced flag
+                    // misplaced flag
                     all_flags_on_mines = false;
                 }
             }
 
-            //chord if correct number of flags
+            // chord if correct number of flags
             if(num_flags == cell->value){
                 if(all_flags_on_mines){
                     for(int i = 0; i < cell->num_neighbours; i++){
@@ -236,9 +264,20 @@ void Minesweeper::open_cell(int y, int x, bool external = true){
                         open_cell(neighbour->y, neighbour->x, false);
                     }
                 } else {
+                    // correct number of flags around the cell but not all mnes are covered
                     hit_mine = true;
+                    game_finished = true;
+
+                    // set finish time
+                    end_time = std::chrono::system_clock::now();
                 }
             }
+        }
+
+        // if all non-mine cells have been opened
+        if(opened_cells == height * width - mines){
+            end_time = std::chrono::system_clock::now();
+            game_finished = true;
         }
     }
 }
@@ -248,4 +287,9 @@ void Minesweeper::toggle_flag(int y, int x){
     if(!cell->visited && !hit_mine){
         cell->is_flag = !cell->is_flag;
     }
+}
+
+double Minesweeper::get_playing_time(){
+    std::chrono::duration<double> duration = end_time - start_time;
+    return duration.count();
 }
