@@ -22,3 +22,4 @@ g++ minesweeper.cpp -o minesweeper -lncurses -O3 -std=c++1
 - [ ] Fix bug when win is detected but not all cells are opened
 - [ ] Implement mine swapping on first click
 - [ ] Implement game restart
+- [ ] Fix blank UI unless a button is pressed
