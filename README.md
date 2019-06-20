@@ -9,7 +9,7 @@ A simple implementation of minesweeper in C++ using ncurses. Currently work in p
 
 To compile run: 
 
-g++ minesweeper.cpp -o minesweeper -lncurses -O3 -std=c++1
+g++ minesweeper.cpp -o minesweeper -lncurses -O3 -std=c++11
 
 ##### Controls:
 
