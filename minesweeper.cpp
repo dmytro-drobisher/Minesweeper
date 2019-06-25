@@ -39,13 +39,14 @@ void update_display(WINDOW *win, Minesweeper game){
 
 int main(int argc, char *argv[]){
     int input;
+    bool restart = true;
+    
+    int cur_x;
+    int cur_y;
 
     int width = 8;
     int height = 8;
     int mines = 10;
-
-    int cur_x = 1;
-    int cur_y = 1;
 
     int win_start_x = 0;
     int win_start_y = 0;
@@ -108,79 +109,92 @@ int main(int argc, char *argv[]){
     keypad(stdscr, true);
 
     WINDOW *win = newwin(height + 2, width + 2, win_start_y, win_start_x);
-    box(win, 0, 0);
-    refresh();
-    wmove(win, 1, 1);
-    update_display(win, game);
 
-    while(!game.game_finished)
-    {
-        if((input = getch()) != ERR){
-            switch (input)
-            {
-                case KEY_DOWN:
-                    if(cur_y < height){
-                        cur_y++;
-                    }
-                    break;
+    while(restart){
+        // set cursor's initial position
+        cur_x = 1;
+        cur_y = 1;
 
-                case KEY_UP:
-                    if(cur_y > 1){
-                        cur_y--;
-                    }
-                    break;
+        // draw window
+        refresh();
+        box(win, 0, 0);
+        update_display(win, game);
+        wmove(win, 1, 1);
+        wrefresh(win);
+        
+        restart = false;
 
-                case KEY_RIGHT:
-                    if(cur_x < width){
-                        cur_x++;
-                    }
-                    break;
+        while(!game.game_finished)
+        {
+            if((input = getch()) != ERR){
+                switch (input)
+                {
+                    case KEY_DOWN:
+                        if(cur_y < height){
+                            cur_y++;
+                        }
+                        break;
 
-                case KEY_LEFT:
-                    if(cur_x > 1){
-                        cur_x--;
-                    }
-                    break;
+                    case KEY_UP:
+                        if(cur_y > 1){
+                            cur_y--;
+                        }
+                        break;
 
-                case 10: //enter key
-                    game.open_cell(cur_y - 1, cur_x - 1);
-                    break;
+                    case KEY_RIGHT:
+                        if(cur_x < width){
+                            cur_x++;
+                        }
+                        break;
 
-                case 102: //F key
-                    game.toggle_flag(cur_y - 1, cur_x - 1);
-                    break;
+                    case KEY_LEFT:
+                        if(cur_x > 1){
+                            cur_x--;
+                        }
+                        break;
 
-                default:
-                    break;
+                    case 10: //enter key
+                        game.open_cell(cur_y - 1, cur_x - 1);
+                        break;
+
+                    case 102: //F key
+                        game.toggle_flag(cur_y - 1, cur_x - 1);
+                        break;
+
+                    default:
+                        break;
+                }
+
+                update_display(win, game);
+                wmove(win, cur_y, cur_x);
+                wrefresh(win);
             }
-
-            update_display(win, game);
-            wmove(win, cur_y, cur_x);
-            wrefresh(win);
         }
-    }
 
-    // End game statistics
-    move(height + 3, 0);
-    
-    if(game.hit_mine){
-        printw("Hit Mine!\n");    
-    } else {
-        printw("You win!\n");
-        printw("You did it in %.2f seconds.\n", game.get_playing_time());
-    }
+        // End game statistics
+        move(height + 3, 0);
 
-    printw("Press 'R' to restart, 'ENTER' to quit...");
-    refresh();
+        if(game.hit_mine){
+            printw("Hit Mine!\n");    
+        } else {
+            printw("You win!\n");
+            printw("You did it in %.2f seconds.\n", game.get_playing_time());
+        }
 
-    while(1){
-        input = getch();
-        if(input != ERR){
-            if(getch() == 114){
-                printf("restart");
-                //game.restart()
-            } else {
-                break;
+        printw("Press 'R' to restart, 'ENTER' to quit...");
+        refresh();
+
+        while(1){
+            input = getch();
+            if(input != ERR){
+                if(input == 114){     // R key
+                    game.restart();
+                    restart = true;
+                    clear();
+                    break;
+                } else if(input == 10){
+                    break;
+                }
             }
         }
     }

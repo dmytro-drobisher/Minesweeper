@@ -31,7 +31,11 @@ private:
 
     void compute_digit_cells();
 
-    void set_up();
+    void set_up_minefield();
+
+    void reset_minefield();
+
+    void swap_mine(int y, int x);
 
 public:
     Node* board;
@@ -45,13 +49,14 @@ public:
     Minesweeper(int h, int w, int m){
         first_click = true;
         game_finished = false;
+        hit_mine = false;
         opened_cells = 0;
         
         height = h;
         width = w;
         mines = m;
-        hit_mine = false;
 
+        // initialise board
         board = new Node[height * width];
         for(int i = 0; i < height; i++){
             for(int j = 0; j < width; j++){
@@ -66,16 +71,23 @@ public:
             }
         }
         
-        set_up();
+        // lay out mines
+        set_up_minefield();
+
+        // obtain a list of neighbours for each cell
+        compute_neighbours();
     }
 
-    //depth first search when opening empty area
-    //just open the cell otherwise
+    // depth first search when opening empty area
+    // just open the cell otherwise
     void open_cell(int y, int x, bool external);
 
     void toggle_flag(int y, int x);
 
     double get_playing_time();
+
+    // restart game
+    void restart();
 };
 
 void Minesweeper::compute_neighbours(){
@@ -180,7 +192,7 @@ void Minesweeper::compute_digit_cells(){
     }
 }
 
-void Minesweeper::set_up(){
+void Minesweeper::set_up_minefield(){
     srand(time(0));
     int position;
 
@@ -195,15 +207,49 @@ void Minesweeper::set_up(){
             }
         }
     }
-    //obtain a list of neighbours for each cell
-    compute_neighbours();
+}
+
+void Minesweeper::reset_minefield(){
+    Node *cell;
+    
+    // reset each cell to default values
+    for (int i = 0; i < height * width; i++){
+        cell = &board[i];
+
+        cell->is_mine = false;
+        cell->is_flag = false;
+        cell->visited = false;
+        cell->value = 0;
+    }
+}
+
+void Minesweeper::swap_mine(int y, int x){
+    // swap mine to top left corner if initial click is a mine
+    Node *cell;
+    
+    // iterate from top left corner until a free cell is found
+    for (int i = 0; i < width * height; i++){
+        cell = &board[i];
+        if(!cell->is_mine){
+            cell->is_mine = true;
+            break;
+        }
+    }
+    
+    // remove mine from current cell
+    cell = &board[y * width + x];
+    cell->is_mine = false;
 }
 
 void Minesweeper::open_cell(int y, int x, bool external = true){
     Node *cell = &board[y * width + x];
     
     if(first_click){
-        // TODO: first mine behaviour
+        // swap mine to top left corner if first click is a mine
+        // same behaviour as in windows minesweeper
+        if(cell->is_mine){
+            swap_mine(y, x);
+        }
 
         // calculate number of mines surrounding each cell
         compute_digit_cells();
@@ -294,4 +340,16 @@ void Minesweeper::toggle_flag(int y, int x){
 double Minesweeper::get_playing_time(){
     std::chrono::duration<double> duration = end_time - start_time;
     return duration.count();
+}
+
+void Minesweeper::restart(){
+    // reset game controls
+    first_click = true;
+    game_finished = false;
+    hit_mine = false;
+    opened_cells = 0;
+
+    // reset the board
+    reset_minefield();
+    set_up_minefield();
 }
